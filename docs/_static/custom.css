@@ -1,0 +1,9 @@
+/* OneOpen Flow Sphinx overrides */
+.sidebar-brand-text {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.sd-card {
+  border-radius: 12px;
+}

@@ -1,0 +1,228 @@
+{
+  "name": "Build, Start and Validate Dynamic Application",
+  "version": 1,
+  "description": "Builds, starts and validates a dynamic React or ASPX application",
+  "variables": {
+    "applicationType": "react",
+    "baseUrl": "http://localhost:3000",
+    "healthEndpoint": "/health",
+    "username": "demo@oneopen.local",
+    "password": "{{secret.LOGIN_PASSWORD}}",
+    "buildCommand": "npm run build",
+    "startCommand": "npm run start",
+    "expectedDashboardText": "Dashboard"
+  },
+  "tags": ["demo", "react", "aspx"],
+  "trigger_type": "manual",
+  "nodes": [
+    {
+      "id": "start",
+      "type": "start",
+      "name": "Start",
+      "config": {},
+      "position": { "x": 40, "y": 180 }
+    },
+    {
+      "id": "build",
+      "type": "run_powershell",
+      "name": "Run CLI build command",
+      "config": {
+        "shell": "powershell",
+        "command": "{{variable.buildCommand}}",
+        "workingDirectory": ".",
+        "timeoutSeconds": 600,
+        "allowedExitCodes": [0],
+        "captureStdout": true,
+        "captureStderr": true,
+        "outputParsing": {
+          "type": "regex",
+          "pattern": "version[=:]\\s*([0-9.]+)",
+          "outputKey": "buildVersion"
+        },
+        "agentSelector": { "requiredTags": ["windows", "powershell"] }
+      },
+      "position": { "x": 220, "y": 40 }
+    },
+    {
+      "id": "start-app",
+      "type": "run_powershell",
+      "name": "Run CLI start command",
+      "config": {
+        "shell": "powershell",
+        "command": "{{variable.startCommand}}",
+        "timeoutSeconds": 120,
+        "allowedExitCodes": [0]
+      },
+      "position": { "x": 220, "y": 180 }
+    },
+    {
+      "id": "wait-health",
+      "type": "wait",
+      "name": "Wait for health API",
+      "config": { "seconds": 2 },
+      "position": { "x": 220, "y": 320 }
+    },
+    {
+      "id": "health-request",
+      "type": "rest_request",
+      "name": "Send REST health request",
+      "config": {
+        "method": "GET",
+        "url": "{{variable.baseUrl}}{{variable.healthEndpoint}}",
+        "timeoutSeconds": 30,
+        "retry": 3
+      },
+      "position": { "x": 460, "y": 40 }
+    },
+    {
+      "id": "assert-200",
+      "type": "assert_status_code",
+      "name": "Assert status 200",
+      "config": { "expected": 200 },
+      "position": { "x": 460, "y": 180 }
+    },
+    {
+      "id": "open-app",
+      "type": "open_url",
+      "name": "Open dynamic application",
+      "config": { "url": "{{variable.baseUrl}}" },
+      "position": { "x": 700, "y": 40 }
+    },
+    {
+      "id": "fill-user",
+      "type": "fill_input",
+      "name": "Fill username",
+      "config": {
+        "label": "Username",
+        "value": "{{variable.username}}",
+        "fingerprint": {
+          "strategy": "fingerprint",
+          "role": "textbox",
+          "accessibleName": "Username",
+          "tag": "input",
+          "attributes": { "data-oneopen-id": "auth.username" },
+          "stableSelectors": ["[data-oneopen-id='auth.username']"],
+          "historicalSelectors": ["#ctl00_ContentPlaceHolder1_txtUsername"]
+        },
+        "locatorPolicy": "controlled_healing",
+        "confidenceThreshold": 90
+      },
+      "position": { "x": 700, "y": 160 }
+    },
+    {
+      "id": "fill-pass",
+      "type": "fill_input",
+      "name": "Fill password",
+      "config": {
+        "label": "Password",
+        "value": "{{secret.LOGIN_PASSWORD}}",
+        "isSecret": true,
+        "secretKey": "LOGIN_PASSWORD",
+        "fingerprint": {
+          "role": "textbox",
+          "accessibleName": "Password",
+          "attributes": { "type": "password", "data-oneopen-id": "auth.password" },
+          "stableSelectors": ["[data-oneopen-id='auth.password']"]
+        }
+      },
+      "position": { "x": 700, "y": 280 }
+    },
+    {
+      "id": "click-login",
+      "type": "click",
+      "name": "Click login",
+      "config": {
+        "role": "button",
+        "name": "Login",
+        "fingerprint": {
+          "role": "button",
+          "accessibleName": "Login",
+          "text": "Login",
+          "attributes": { "data-oneopen-id": "auth.login" },
+          "stableSelectors": ["[data-oneopen-id='auth.login']"],
+          "historicalSelectors": ["#ctl00_MainContent_btnSubmit"]
+        }
+      },
+      "position": { "x": 940, "y": 40 }
+    },
+    {
+      "id": "wait-render",
+      "type": "wait_for_react_render",
+      "name": "Wait for React render or ASPX postback",
+      "config": {
+        "timeoutSeconds": 30,
+        "applicationType": "{{variable.applicationType}}"
+      },
+      "position": { "x": 940, "y": 160 }
+    },
+    {
+      "id": "assert-dashboard",
+      "type": "assert_visible",
+      "name": "Assert dashboard is visible",
+      "config": {
+        "text": "{{variable.expectedDashboardText}}",
+        "fingerprint": {
+          "text": "Dashboard",
+          "attributes": { "data-oneopen-id": "dashboard.root" }
+        }
+      },
+      "position": { "x": 940, "y": 280 }
+    },
+    {
+      "id": "extract-version",
+      "type": "extract_text",
+      "name": "Extract displayed build version",
+      "config": {
+        "outputKey": "uiBuildVersion",
+        "oneOpenId": "app.build-version",
+        "fingerprint": {
+          "attributes": { "data-oneopen-id": "app.build-version" },
+          "stableSelectors": ["[data-oneopen-id='app.build-version']"]
+        }
+      },
+      "position": { "x": 1180, "y": 120 }
+    },
+    {
+      "id": "compare-version",
+      "type": "compare_values",
+      "name": "Compare build version with CLI output",
+      "config": {
+        "left": "{{node.extract-version.output.uiBuildVersion}}",
+        "right": "{{node.build.output.buildVersion}}",
+        "operator": "eq"
+      },
+      "position": { "x": 1180, "y": 260 }
+    },
+    {
+      "id": "screenshot",
+      "type": "take_screenshot",
+      "name": "Take screenshot",
+      "config": {},
+      "position": { "x": 1420, "y": 180 }
+    },
+    {
+      "id": "end",
+      "type": "end",
+      "name": "End",
+      "config": {},
+      "position": { "x": 1660, "y": 180 }
+    }
+  ],
+  "edges": [
+    { "id": "e1", "source": "start", "target": "build" },
+    { "id": "e2", "source": "build", "target": "start-app" },
+    { "id": "e3", "source": "start-app", "target": "wait-health" },
+    { "id": "e4", "source": "wait-health", "target": "health-request" },
+    { "id": "e5", "source": "health-request", "target": "assert-200" },
+    { "id": "e6", "source": "assert-200", "target": "open-app" },
+    { "id": "e7", "source": "open-app", "target": "fill-user" },
+    { "id": "e8", "source": "fill-user", "target": "fill-pass" },
+    { "id": "e9", "source": "fill-pass", "target": "click-login" },
+    { "id": "e10", "source": "click-login", "target": "wait-render" },
+    { "id": "e11", "source": "wait-render", "target": "assert-dashboard" },
+    { "id": "e12", "source": "assert-dashboard", "target": "extract-version" },
+    { "id": "e13", "source": "extract-version", "target": "compare-version" },
+    { "id": "e14", "source": "compare-version", "target": "screenshot" },
+    { "id": "e15", "source": "screenshot", "target": "end" }
+  ]
+}

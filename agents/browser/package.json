@@ -1,0 +1,19 @@
+{
+  "name": "oneopen-browser-agent",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "start": "node --import tsx src/index.ts",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "playwright": "1.51.1",
+    "tsx": "4.19.3"
+  },
+  "devDependencies": {
+    "typescript": "5.8.3",
+    "vitest": "3.1.1"
+  }
+}

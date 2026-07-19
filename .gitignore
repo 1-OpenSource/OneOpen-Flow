@@ -1,0 +1,16 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+node_modules/
+dist/
+storage/artifacts/
+storage/workspaces/
+storage/evidence/
+*.db
+.env
+.DS_Store
+backend/oneopen_flow.db
+frontend/dist/
+docs/_build/
+

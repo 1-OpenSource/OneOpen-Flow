@@ -1,0 +1,111 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: oneopen-flow-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-oneopen}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-oneopen}
+      POSTGRES_DB: ${POSTGRES_DB:-oneopen_flow}
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: oneopen-flow-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+    container_name: oneopen-flow-backend
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-oneopen}:${POSTGRES_PASSWORD:-oneopen}@postgres:5432/${POSTGRES_DB:-oneopen_flow}
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+      SECRET_KEY: ${SECRET_KEY:-replace-me-in-production}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:-oneopen-flow-dev-encryption-key-32b}
+      STORAGE_LOCAL_PATH: /storage
+      WORKBOARD_API_URL: ${WORKBOARD_API_URL:-http://host.docker.internal:8001/api}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:5173}
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./storage:/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  celery-worker:
+    build:
+      context: ./backend
+    container_name: oneopen-flow-celery
+    command: celery -A app.tasks.execution.celery_app worker --loglevel=INFO -Q flow
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-oneopen}:${POSTGRES_PASSWORD:-oneopen}@postgres:5432/${POSTGRES_DB:-oneopen_flow}
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+      SECRET_KEY: ${SECRET_KEY:-replace-me-in-production}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:-oneopen-flow-dev-encryption-key-32b}
+      STORAGE_LOCAL_PATH: /storage
+    volumes:
+      - ./storage:/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      backend:
+        condition: service_started
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: oneopen-flow-frontend
+    environment:
+      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8000}
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+
+  browser-agent:
+    build:
+      context: ./agents/browser
+    container_name: oneopen-flow-browser-agent
+    environment:
+      FLOW_API_URL: http://backend:8000
+      AGENT_NAME: browser-agent-docker
+    depends_on:
+      - backend
+    shm_size: "1gb"
+
+  cli-agent:
+    build:
+      context: ./agents/cli
+    container_name: oneopen-flow-cli-agent
+    environment:
+      FLOW_API_URL: http://backend:8000
+      AGENT_NAME: cli-agent-docker
+      AGENT_PROFILE: restricted
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
