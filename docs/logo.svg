@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="OneOpen Flow">
+  <defs>
+    <linearGradient id="flow-bg" x1="8" y1="4" x2="56" y2="60" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2dd4bf"/>
+      <stop offset="1" stop-color="#0e7490"/>
+    </linearGradient>
+    <linearGradient id="flow-glow" x1="18" y1="14" x2="50" y2="50" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ffffff" stop-opacity=".34"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <!-- App tile -->
+  <rect x="2" y="2" width="60" height="60" rx="16" fill="url(#flow-bg)"/>
+  <rect x="2" y="2" width="60" height="60" rx="16" fill="url(#flow-glow)"/>
+  <!-- Workflow graph underlay -->
+  <path d="M18 22h10M28 22v10M28 32h10M38 32v10M38 42h8" fill="none" stroke="#042f2e" stroke-width="2.4" opacity=".22" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M18 22h10M28 22v10M28 32h10M38 32v10M38 42h8" fill="none" stroke="#ecfeff" stroke-width="2.2" opacity=".88" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Node dots -->
+  <circle cx="18" cy="22" r="3.2" fill="#ecfeff"/>
+  <circle cx="28" cy="22" r="3.2" fill="#ecfeff"/>
+  <circle cx="28" cy="32" r="3.2" fill="#ecfeff"/>
+  <circle cx="38" cy="32" r="3.2" fill="#ecfeff"/>
+  <circle cx="38" cy="42" r="3.2" fill="#ecfeff"/>
+  <circle cx="46" cy="42" r="3.2" fill="#ecfeff"/>
+  <!-- Soft node shadows -->
+  <circle cx="18" cy="22" r="3.2" fill="#042f2e" opacity=".12"/>
+  <circle cx="46" cy="42" r="3.2" fill="#042f2e" opacity=".12"/>
+  <!-- Open ring (OneOpen) -->
+  <circle cx="32" cy="32" r="7.6" fill="none" stroke="#f0fdfa" stroke-width="3.5"/>
+  <circle cx="32" cy="32" r="3.2" fill="#042f2e" opacity=".55"/>
+</svg>

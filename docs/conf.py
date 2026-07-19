@@ -47,6 +47,8 @@ html_short_title = "OneOpen Flow"
 html_static_path = ["_static"]
 html_css_files = ["custom.css"]
 html_favicon = None
+# Prefer docs/logo.svg for Sphinx branding when building HTML
+html_logo = "logo.svg"
 
 html_theme_options = {
     "light_css_variables": {
