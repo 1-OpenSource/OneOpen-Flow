@@ -28,6 +28,16 @@ class Settings(BaseSettings):
     max_cli_output_bytes: int = 2_000_000
     celery_broker_url: str = "redis://localhost:6379/0"
     celery_result_backend: str = "redis://localhost:6379/1"
+    frontend_url: str = "http://localhost:5173"
+    # Optional env-based OIDC (overrides org settings when set)
+    oidc_enabled: bool = False
+    oidc_issuer: str | None = None
+    oidc_client_id: str | None = None
+    oidc_client_secret: str | None = None
+    oidc_redirect_uri: str | None = None
+    oidc_scopes: str = "openid profile email"
+    oidc_provider_name: str = "SSO"
+    oidc_default_role: str = "member"
 
     @property
     def cors_origin_list(self) -> list[str]:

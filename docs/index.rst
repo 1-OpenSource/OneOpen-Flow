@@ -1,5 +1,3 @@
-:root-doc: index
-
 OneOpen Flow documentation
 ==========================
 
@@ -10,32 +8,13 @@ It automates complete technical workflows across browsers, CLI commands, REST
 APIs, databases, files, and Docker — with first-class support for dynamic ASPX
 and React applications.
 
-.. grid:: 2
-   :gutter: 2
+Agentic AI systems authenticate with a **service account** (not a human user
+login). See :doc:`service-accounts` and :doc:`agentic-admin-sso`.
 
-   .. grid-item-card:: Architecture
-      :link: architecture
-      :link-type: doc
+.. note::
 
-      System components, execution model, and design principles.
-
-   .. grid-item-card:: Local development
-      :link: local-development
-      :link-type: doc
-
-      Docker Compose, local setup, environment variables, and tests.
-
-   .. grid-item-card:: Workflow schema
-      :link: workflow-schema
-      :link-type: doc
-
-      Versioned JSON definitions, variables, and validation rules.
-
-   .. grid-item-card:: Security
-      :link: security
-      :link-type: doc
-
-      Permissions, secrets, CLI isolation, and audit logging.
+   This documentation is built with Sphinx using the classic
+   `Read the Docs <https://docs.readthedocs.io/>`_ theme.
 
 Quick start
 -----------
@@ -50,20 +29,37 @@ Then open http://localhost:5173 and sign in with:
 * Email: ``owner@oneopen.local``
 * Password: ``ChangeMe123!``
 
+Interactive API (Swagger): http://localhost:8000/docs
+
+Contents
+--------
+
 .. toctree::
    :maxdepth: 2
-   :caption: Guides
+   :caption: Getting started
 
-   architecture
    local-development
+   architecture
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Workflows
+
    workflow-schema
    browser-locators
    aspx-support
    react-support
    auth-verification
    cli-agent
-   security
    workboard-integration
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Agentic AI & admin
+
+   service-accounts
+   agentic-admin-sso
+   security
 
 .. toctree::
    :maxdepth: 2

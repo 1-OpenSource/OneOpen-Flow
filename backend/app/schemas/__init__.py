@@ -20,8 +20,163 @@ class UserRead(ORMModel):
     name: str
     email: str
     role: str
+    auth_provider: str = "local"
     is_active: bool
     created_at: datetime
+
+
+class UserAdminUpdate(BaseModel):
+    role: str | None = None
+    is_active: bool | None = None
+    name: str | None = None
+
+
+class InviteCreate(BaseModel):
+    email: str
+    role: str = "member"
+
+
+class InviteRead(ORMModel):
+    id: UUID
+    email: str
+    role: str
+    expires_at: datetime
+    accepted_at: datetime | None
+    created_at: datetime
+
+
+class InviteCreatedResponse(BaseModel):
+    invite: InviteRead
+    accept_token: str
+    accept_url: str
+
+
+class AcceptInviteRequest(BaseModel):
+    token: str
+    name: str
+    password: str
+
+
+class RolePermissionsRead(BaseModel):
+    roles: dict[str, list[str]]
+    permissions: list[str]
+
+
+class ApiKeyCreate(BaseModel):
+    name: str
+    client_id: str | None = None
+    description: str | None = None
+    scopes: list[str] = Field(
+        default_factory=lambda: ["workflows:run", "workflows:read", "exposed:invoke"]
+    )
+    expires_in_days: int | None = None
+
+
+class ApiKeyRead(ORMModel):
+    id: UUID
+    name: str
+    client_id: str = ""
+    description: str | None = None
+    prefix: str
+    scopes: list[Any]
+    is_active: bool
+    expires_at: datetime | None
+    last_used_at: datetime | None
+    created_at: datetime
+
+
+class ApiKeyCreatedResponse(BaseModel):
+    key: ApiKeyRead
+    token: str
+    service_account: ApiKeyRead | None = None
+    client_secret: str | None = None
+
+
+class SsoPublicConfig(BaseModel):
+    enabled: bool
+    provider_name: str = "SSO"
+    authorize_url: str | None = None
+    allow_local_login: bool = True
+
+
+class SsoAdminConfig(BaseModel):
+    sso_enabled: bool = False
+    sso_provider_name: str = "OIDC"
+    oidc_issuer: str | None = None
+    oidc_client_id: str | None = None
+    oidc_client_secret_set: bool = False
+    oidc_redirect_uri: str | None = None
+    oidc_scopes: str = "openid profile email"
+    oidc_default_role: str = "member"
+    allow_local_login: bool = True
+
+
+class SsoAdminUpdate(BaseModel):
+    sso_enabled: bool | None = None
+    sso_provider_name: str | None = None
+    oidc_issuer: str | None = None
+    oidc_client_id: str | None = None
+    oidc_client_secret: str | None = None
+    oidc_redirect_uri: str | None = None
+    oidc_scopes: str | None = None
+    oidc_default_role: str | None = None
+    allow_local_login: bool | None = None
+
+
+class WorkflowExposeRequest(BaseModel):
+    enabled: bool = True
+    slug: str | None = None
+    description: str | None = None
+    input_schema: dict[str, Any] = Field(default_factory=dict)
+
+
+class ExposedWorkflowSummary(BaseModel):
+    id: UUID
+    name: str
+    slug: str
+    description: str | None
+    input_schema: dict[str, Any]
+    tags: list[Any]
+    current_version: int
+
+
+class ExposedWorkflowDetail(ExposedWorkflowSummary):
+    invoke_path: str
+    variables: dict[str, Any] = Field(default_factory=dict)
+
+
+class AgenticTool(BaseModel):
+    name: str
+    description: str
+    method: str
+    path: str
+    permission: str | None = None
+    body_schema: dict[str, Any] = Field(default_factory=dict)
+
+
+class AgenticCatalog(BaseModel):
+    version: str = "1.0"
+    auth: dict[str, Any]
+    tools: list[AgenticTool]
+    exposed_workflows: list[ExposedWorkflowSummary]
+
+
+class SecretUpdate(BaseModel):
+    value: str | None = None
+    description: str | None = None
+
+
+class EnvironmentUpdate(BaseModel):
+    name: str | None = None
+    description: str | None = None
+    variables: dict[str, Any] | None = None
+
+
+class AgentUpdate(BaseModel):
+    is_enabled: bool | None = None
+    tags: list[str] | None = None
+    max_workload: int | None = None
+    profile: str | None = None
 
 
 class TokenResponse(BaseModel):
@@ -96,6 +251,10 @@ class WorkflowSummary(ORMModel):
     owner_id: UUID
     tags: list[Any]
     trigger_type: str
+    is_exposed: bool = False
+    expose_slug: str | None = None
+    expose_description: str | None = None
+    input_schema: dict[str, Any] = Field(default_factory=dict)
     last_run_at: datetime | None
     last_status: str | None
     created_at: datetime

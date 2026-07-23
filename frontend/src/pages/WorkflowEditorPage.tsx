@@ -49,6 +49,8 @@ export function WorkflowEditorPage() {
   const [runStatus, setRunStatus] = useState<string>("idle");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
+  const [isExposed, setIsExposed] = useState(false);
+  const [exposeSlug, setExposeSlug] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -75,6 +77,8 @@ export function WorkflowEditorPage() {
       setEdges(initialEdges);
       setMeta("Untitled workflow", "");
       selectNode(undefined);
+      setIsExposed(false);
+      setExposeSlug("");
       return;
     }
 
@@ -84,6 +88,8 @@ export function WorkflowEditorPage() {
       const graph = definitionToFlow(wf.definition);
       setNodes(graph.nodes);
       setEdges(graph.edges);
+      setIsExposed(!!wf.is_exposed);
+      setExposeSlug(wf.expose_slug || "");
     });
 
     return () => {
@@ -173,6 +179,30 @@ export function WorkflowEditorPage() {
     },
     [setNodes],
   );
+
+  async function toggleExpose() {
+    if (isNew) {
+      setMessage("Save the workflow before exposing it");
+      return;
+    }
+    const wfId = workflowId || id!;
+    try {
+      const updated = await workflowService.expose(wfId, {
+        enabled: !isExposed,
+        slug: exposeSlug || undefined,
+        description: description || undefined,
+      });
+      setIsExposed(!!updated.is_exposed);
+      setExposeSlug(updated.expose_slug || "");
+      setMessage(
+        updated.is_exposed
+          ? `Exposed as /api/exposed/workflows/${updated.expose_slug}/invoke`
+          : "Workflow unexposed",
+      );
+    } catch {
+      setMessage("Failed to update expose settings");
+    }
+  }
 
   async function save() {
     setSaving(true);
@@ -277,6 +307,20 @@ export function WorkflowEditorPage() {
           <button className="btn" onClick={exportJson} disabled={isNew}>Export</button>
           <button className="btn" onClick={validate}>Validate</button>
           <button className="btn" onClick={save} disabled={saving}>{saving ? "Saving…" : "Save"}</button>
+          {!isNew && (
+            <>
+              <input
+                style={{ width: 140 }}
+                placeholder="expose slug"
+                value={exposeSlug}
+                onChange={(e) => setExposeSlug(e.target.value)}
+                title="Public slug for agentic invoke"
+              />
+              <button className={`btn ${isExposed ? "btn-primary" : ""}`} onClick={toggleExpose}>
+                {isExposed ? "Exposed" : "Expose"}
+              </button>
+            </>
+          )}
           <button className="btn btn-primary" onClick={run}>Run</button>
         </div>
       </div>

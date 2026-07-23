@@ -1,3 +1,4 @@
+from app.models.admin import ApiKey, OrganizationSettings, UserInvite
 from app.models.agent import AgentCapability, AgentJob, ExecutionAgent
 from app.models.run import Artifact, NodeRun, WorkboardLink, WorkflowRun
 from app.models.support import (
@@ -37,4 +38,7 @@ __all__ = [
     "LocatorFingerprint",
     "LocatorResolution",
     "AuditLog",
+    "ApiKey",
+    "UserInvite",
+    "OrganizationSettings",
 ]

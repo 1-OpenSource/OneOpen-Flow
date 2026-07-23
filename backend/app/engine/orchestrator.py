@@ -311,7 +311,8 @@ class WorkflowEngine:
         run.status = "passed"
         run.ended_at = datetime.now(UTC)
         if run.started_at:
-            run.duration_ms = int((run.ended_at - run.started_at).total_seconds() * 1000)
+            started = run.started_at if run.started_at.tzinfo else run.started_at.replace(tzinfo=UTC)
+            run.duration_ms = int((run.ended_at - started).total_seconds() * 1000)
         workflow.last_status = "passed"  # type: ignore[union-attr]
         self.db.add(run)
         self.db.add(workflow)
@@ -601,7 +602,8 @@ class WorkflowEngine:
         run.recommended_action = recommended_action or info.recommended_action
         run.ended_at = datetime.now(UTC)
         if run.started_at:
-            run.duration_ms = int((run.ended_at - run.started_at).total_seconds() * 1000)
+            started = run.started_at if run.started_at.tzinfo else run.started_at.replace(tzinfo=UTC)
+            run.duration_ms = int((run.ended_at - started).total_seconds() * 1000)
         self.db.add(run)
         self.db.commit()
         event_broker.publish_sync(

@@ -5,6 +5,7 @@ import {
   GitBranch,
   LayoutDashboard,
   Settings,
+  Shield,
   Moon,
   Sun,
 } from "lucide-react";
@@ -42,6 +43,9 @@ export function AppLayout() {
           </NavLink>
           <NavLink className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`} to="/environments">
             <LayoutDashboard size={16} /> Environments
+          </NavLink>
+          <NavLink className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`} to="/admin">
+            <Shield size={16} /> Admin
           </NavLink>
           <NavLink className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`} to="/settings">
             <Settings size={16} /> Settings

@@ -21,6 +21,10 @@ export function EnvironmentsPage() {
       qc.invalidateQueries({ queryKey: ["environments"] });
     },
   });
+  const remove = useMutation({
+    mutationFn: (id: string) => environmentService.remove(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["environments"] }),
+  });
 
   function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -54,7 +58,7 @@ export function EnvironmentsPage() {
         <div className="card">
           <table className="table">
             <thead>
-              <tr><th>Name</th><th>Variables</th><th>Updated</th></tr>
+              <tr><th>Name</th><th>Variables</th><th>Updated</th><th /></tr>
             </thead>
             <tbody>
               {data.map((env) => (
@@ -62,6 +66,11 @@ export function EnvironmentsPage() {
                   <td>{env.name}</td>
                   <td><code>{Object.keys(env.variables || {}).join(", ") || "—"}</code></td>
                   <td>{new Date(env.updated_at).toLocaleString()}</td>
+                  <td>
+                    <button className="btn btn-danger" type="button" onClick={() => remove.mutate(env.id)}>
+                      Delete
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>

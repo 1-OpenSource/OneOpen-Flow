@@ -1,5 +1,5 @@
 import { clearAuthToken } from "../utils/storage";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 export function SettingsPage() {
   const navigate = useNavigate();
@@ -8,13 +8,16 @@ export function SettingsPage() {
       <div className="page-header">
         <div>
           <h1>Settings</h1>
-          <p>OneOpen Flow module settings and account controls.</p>
+          <p>Account controls and platform links.</p>
         </div>
       </div>
       <div className="card stack">
         <p className="muted">
-          Permissions follow the OneOpenSource model: view/edit/run workflows, manage agents and secrets,
-          approve healed locators, and create Workboard defects.
+          Administration (RBAC, SSO, service accounts) lives under{" "}
+          <Link to="/admin">Admin</Link>. Agentic AI must use a{" "}
+          <strong>service account</strong> token with{" "}
+          <code>GET /api/agentic/catalog</code> and{" "}
+          <code>/api/exposed/workflows/&#123;slug&#125;/invoke</code>.
         </p>
         <p className="muted">
           Workboard API integration uses <code>WORKBOARD_API_URL</code>. Locator healing default threshold is 90.

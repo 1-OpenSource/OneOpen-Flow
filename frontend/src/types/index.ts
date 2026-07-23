@@ -35,6 +35,10 @@ export type WorkflowSummary = {
   owner_id: string;
   tags: string[];
   trigger_type: string;
+  is_exposed?: boolean;
+  expose_slug?: string | null;
+  expose_description?: string | null;
+  input_schema?: Record<string, unknown>;
   last_run_at?: string | null;
   last_status?: string | null;
   created_at: string;

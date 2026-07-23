@@ -13,12 +13,15 @@ from app.schemas import (
     AgentRead,
     AgentRegisterRequest,
     AgentRegisterResponse,
+    AgentUpdate,
     ClaimJobResponse,
     CompleteJobRequest,
     EnvironmentCreate,
     EnvironmentRead,
+    EnvironmentUpdate,
     SecretCreate,
     SecretRead,
+    SecretUpdate,
 )
 from app.services.agents import AgentService
 from app.services.audit import AuditService
@@ -118,6 +121,52 @@ def list_agents(
     return db.query(ExecutionAgent).order_by(ExecutionAgent.created_at.desc()).all()
 
 
+@router.patch("/agents/{agent_id}", response_model=AgentRead)
+def update_agent(
+    agent_id: UUID,
+    payload: AgentUpdate,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_permission(Permission.MANAGE_AGENTS)),
+):
+    agent = db.get(ExecutionAgent, agent_id)
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    data = payload.model_dump(exclude_unset=True)
+    for key, value in data.items():
+        setattr(agent, key, value)
+    db.add(agent)
+    AuditService(db).record(
+        action="agent.updated",
+        resource_type="execution_agent",
+        resource_id=str(agent.id),
+        actor_id=user.id,
+        details=data,
+    )
+    db.commit()
+    db.refresh(agent)
+    return agent
+
+
+@router.delete("/agents/{agent_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_agent(
+    agent_id: UUID,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_permission(Permission.MANAGE_AGENTS)),
+):
+    agent = db.get(ExecutionAgent, agent_id)
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    agent.is_enabled = False
+    db.add(agent)
+    AuditService(db).record(
+        action="agent.revoked",
+        resource_type="execution_agent",
+        resource_id=str(agent.id),
+        actor_id=user.id,
+    )
+    db.commit()
+
+
 @router.post("/secrets", response_model=SecretRead, status_code=status.HTTP_201_CREATED)
 def create_secret(
     payload: SecretCreate,
@@ -173,6 +222,32 @@ def delete_secret(
     db.commit()
 
 
+@router.put("/secrets/{secret_id}", response_model=SecretRead)
+def update_secret(
+    secret_id: UUID,
+    payload: SecretUpdate,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_permission(Permission.MANAGE_SECRETS)),
+):
+    secret = db.get(Secret, secret_id)
+    if not secret or secret.deleted_at:
+        raise HTTPException(status_code=404, detail="Secret not found")
+    if payload.value is not None:
+        secret.encrypted_value = encrypt_secret(payload.value)
+    if payload.description is not None:
+        secret.description = payload.description
+    db.add(secret)
+    AuditService(db).record(
+        action="secret.updated",
+        resource_type="secret",
+        resource_id=str(secret.id),
+        actor_id=user.id,
+    )
+    db.commit()
+    db.refresh(secret)
+    return secret
+
+
 @router.post("/environments", response_model=EnvironmentRead, status_code=status.HTTP_201_CREATED)
 def create_environment(
     payload: EnvironmentCreate,
@@ -197,3 +272,35 @@ def list_environments(
     user: User = Depends(require_permission(Permission.VIEW_WORKFLOWS)),
 ):
     return db.query(Environment).order_by(Environment.name.asc()).all()
+
+
+@router.put("/environments/{environment_id}", response_model=EnvironmentRead)
+def update_environment(
+    environment_id: UUID,
+    payload: EnvironmentUpdate,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_permission(Permission.EDIT_WORKFLOWS)),
+):
+    env = db.get(Environment, environment_id)
+    if not env:
+        raise HTTPException(status_code=404, detail="Environment not found")
+    data = payload.model_dump(exclude_unset=True)
+    for key, value in data.items():
+        setattr(env, key, value)
+    db.add(env)
+    db.commit()
+    db.refresh(env)
+    return env
+
+
+@router.delete("/environments/{environment_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_environment(
+    environment_id: UUID,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_permission(Permission.EDIT_WORKFLOWS)),
+):
+    env = db.get(Environment, environment_id)
+    if not env:
+        raise HTTPException(status_code=404, detail="Environment not found")
+    db.delete(env)
+    db.commit()

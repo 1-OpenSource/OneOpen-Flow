@@ -1,22 +1,50 @@
+import hashlib
+import secrets
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
+import bcrypt
 from cryptography.fernet import Fernet
 from jose import JWTError, jwt
-from passlib.context import CryptContext
 
 from app.core.config import get_settings
 
 ALGORITHM = "HS256"
-password_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 def hash_password(password: str) -> str:
-    return password_context.hash(password)
+    raw = password.encode("utf-8")
+    if len(raw) > 72:
+        raw = hashlib.sha256(raw).digest()
+    return bcrypt.hashpw(raw, bcrypt.gensalt()).decode("utf-8")
 
 
-def verify_password(plain_password: str, password_hash: str) -> bool:
-    return password_context.verify(plain_password, password_hash)
+def verify_password(plain_password: str, password_hash: str | None) -> bool:
+    if not password_hash:
+        return False
+    raw = plain_password.encode("utf-8")
+    if len(raw) > 72:
+        raw = hashlib.sha256(raw).digest()
+    try:
+        return bcrypt.checkpw(raw, password_hash.encode("utf-8"))
+    except ValueError:
+        return False
+
+
+def hash_token(raw: str) -> str:
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
+
+def generate_api_key() -> tuple[str, str, str]:
+    """Return (raw_token, prefix, token_hash)."""
+    raw = f"oof_{secrets.token_urlsafe(32)}"
+    prefix = raw[:12]
+    return raw, prefix, hash_token(raw)
+
+
+def generate_invite_token() -> tuple[str, str]:
+    raw = secrets.token_urlsafe(32)
+    return raw, hash_token(raw)
 
 
 def create_access_token(subject: str, expires_delta: timedelta | None = None) -> str:
@@ -38,9 +66,7 @@ def decode_access_token(token: str) -> dict[str, Any] | None:
 
 def _fernet() -> Fernet:
     settings = get_settings()
-    # Derive a stable Fernet key from the configured encryption key.
     import base64
-    import hashlib
 
     digest = hashlib.sha256(settings.encryption_key.encode("utf-8")).digest()
     return Fernet(base64.urlsafe_b64encode(digest))

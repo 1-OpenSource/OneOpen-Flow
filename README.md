@@ -48,6 +48,8 @@ OneOpen Flow is a **visual orchestration studio** for those end-to-end technical
 | **CLI** | Bash / PowerShell / CMD via isolated agents — never shell out from the API process |
 | **API & DB** | REST requests/assertions, PostgreSQL query & assert nodes |
 | **Auth** | Wait for email, extract OTP/link, TOTP, human-in-the-loop OTP entry |
+| **Agentic API** | Full UI parity via REST + `GET /api/agentic/catalog`; expose workflows by slug |
+| **Admin** | RBAC (owner/admin/member/viewer), invites, OIDC SSO, API keys |
 | **Evidence** | Screenshots, traces, console/network logs, stdout/stderr, downloadable ZIP |
 | **Workboard** | Create defects from failures, attach evidence, reproduction reruns |
 | **Security** | Encrypted secrets, masked logs, permissions, audit trail |
@@ -182,7 +184,23 @@ curl -s -X POST http://localhost:8000/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"owner@oneopen.local","password":"ChangeMe123!"}'
 
-# Run a workflow
+# Agentic catalog (service account token)
+curl -s http://localhost:8000/api/agentic/catalog \
+  -H "Authorization: Bearer <oof_service_secret>"
+
+# Expose a workflow for agents
+curl -s -X PUT http://localhost:8000/api/workflows/<id>/expose \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{"enabled":true,"slug":"build-validate"}'
+
+# Invoke exposed workflow (JWT or API key)
+curl -s -X POST http://localhost:8000/api/exposed/workflows/build-validate/invoke \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{"inputs":{}}'
+
+# Run a workflow by id
 curl -s -X POST http://localhost:8000/api/workflows/<id>/run \
   -H "Authorization: Bearer <token>" \
   -H "Content-Type: application/json" \
@@ -197,6 +215,8 @@ curl -s -X POST http://localhost:8000/api/runs/<run_id>/provide-input \
 
 Interactive OpenAPI: http://localhost:8000/docs
 
+Admin RBAC + SSO + service accounts: UI at `/admin`, guides in [docs/service-accounts.md](docs/service-accounts.md) and [docs/agentic-admin-sso.md](docs/agentic-admin-sso.md).
+
 ## Documentation
 
 | Guide | |
@@ -207,12 +227,14 @@ Interactive OpenAPI: http://localhost:8000/docs
 | [ASPX support](docs/aspx-support.md) | Web Forms postbacks |
 | [React support](docs/react-support.md) | Dynamic SPA waits |
 | [Auth verification](docs/auth-verification.md) | Email / OTP / TOTP / HITL |
+| [Service accounts](docs/service-accounts.md) | **AI / machine identity** |
+| [Agentic API, RBAC & SSO](docs/agentic-admin-sso.md) | Catalog, expose, admin |
 | [CLI agent](docs/cli-agent.md) | Registration & security |
 | [Security](docs/security.md) | Permissions & secrets |
 | [Workboard](docs/workboard-integration.md) | Defects & retest |
 | [Local development](docs/local-development.md) | Setup details |
 
-Build Sphinx HTML (Furo theme):
+Build Sphinx HTML (**Read the Docs** theme):
 
 ```bash
 pip install -r docs/requirements-docs.txt

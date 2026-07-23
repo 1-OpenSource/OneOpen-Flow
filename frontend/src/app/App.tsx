@@ -10,6 +10,7 @@ import { AgentsPage } from "../pages/AgentsPage";
 import { SecretsPage } from "../pages/SecretsPage";
 import { EnvironmentsPage } from "../pages/EnvironmentsPage";
 import { SettingsPage } from "../pages/SettingsPage";
+import { AdminPage } from "../pages/AdminPage";
 import { getTheme, setTheme } from "../utils/storage";
 
 setTheme(getTheme());
@@ -30,6 +31,7 @@ export function App() {
           <Route path="/agents" element={<AgentsPage />} />
           <Route path="/secrets" element={<SecretsPage />} />
           <Route path="/environments" element={<EnvironmentsPage />} />
+          <Route path="/admin" element={<AdminPage />} />
           <Route path="/settings" element={<SettingsPage />} />
         </Route>
       </Route>
